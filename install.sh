@@ -5,6 +5,7 @@ pushd $(dirname $0) > /dev/null
 THISDIR=$(pwd)
 popd > /dev/null
 
+ln -s $THISDIR/creds /usr/local/bin/creds
 ln -s $THISDIR/deletemachines /usr/local/bin/deletemachines
 ln -s $THISDIR/machines /usr/local/bin/machines
 ln -s $THISDIR/images /usr/local/bin/images
