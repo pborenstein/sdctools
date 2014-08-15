@@ -1,7 +1,38 @@
 #! /usr/bin/env bash
 
-# machines
+# machines [-a]
+# List all machines for this account in the current data center (SDC_URL)
+#    -a   look in all datacenters
+#         data centers are cached in $HOME/.creds/datacenters
 
-FORMATSTR="%36s %-8.8s %15s %-10.10s %-25.25s %-24.24s\n"
-sdc-listmachines | json -a id state primaryIp name dataset created | xargs printf "${FORMATSTR}"
+all=""
+dcfile="$HOME/.creds/datacenters"
+
+while getopts a opt; do
+  case $opt in
+    a)
+        all="all"
+  esac
+done
+
+if [[ -z $all ]] ; then
+  DATACENTERS=$SDC_URL
+else
+  if [[ -f $dcfile ]] ; then
+    DATACENTERS=$(cat $dcfile)
+  else
+    DATACENTERS=$(sdc-listdatacenters | json -Ma value)
+  fi
+fi
+
+#          id   state  ip   name     image    date     datacenter
+FORMATSTR="%36s %-8.8s %15s %-10.10s %-25.25s %-24.24s %s\n"
+# f1d43871-7868-477f-9998-1768607e6c5d running  165.225.130.208 docs-wiki  sdc:sdc:standard64:1.0.7  2012-09-19T19:19:06.000Z us-east-1
+
+for dc in $DATACENTERS ; do
+  shortname=$(echo $dc | sed 's/http.*\/\/\(.*\).api.joyentcloud.com/\1/')
+  sdc-listmachines --url $dc | \
+    json -a id state primaryIp name dataset created | \
+    xargs -L 1 -J X printf "${FORMATSTR}" X $shortname
+done
 exit
